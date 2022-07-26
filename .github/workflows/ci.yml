@@ -20,3 +20,5 @@ jobs:
     - run: bash build.sh
     - run: cargo run --release -- hello
     - run: ls hello
+    - run: cargo run --release -- -d hello
+    - run: if [[ -f hello ]]; then; exit 1; fi
