@@ -1,10 +1,10 @@
+use std::{fs, path::Path};
+
 use chrono::prelude::*;
 use rusqlite::Connection;
-use std::{fs, path::Path};
-use tabled::{Table, Tabled};
 
 //database struct
-#[derive(Debug, Tabled)]
+#[derive(Debug)]
 struct Files {
     _name: String,
     _time: String,
@@ -43,9 +43,9 @@ pub fn push(paths: &Vec<String>, action: &str) {
         conn.execute(
             "INSERT INTO files (name, time, date, path, action) values (?1, ?2, ?3, ?4, ?5)",
             &[
-                &paths[i],
-                &time,
-                &date,
+                paths[i].as_str(),
+                time.as_str(),
+                date.as_str(),
                 fs::canonicalize(&paths[i]).ok().unwrap().to_str().unwrap(), //retrns full path of object
                 &action,
             ],
@@ -75,11 +75,9 @@ pub fn show() {
             })
         })
         .unwrap();
-    let mut table_vector: Vec<Files> = Vec::new();
     for file in file_iter {
-        table_vector.push(file.unwrap() as Files);
+        println!("{:#?}", file.unwrap() as Files);
     }
-    println!("{}", Table::new(table_vector).to_string());
 }
 
 //if the action preformed on the file was "Trash"
@@ -90,9 +88,9 @@ fn u_trash(name: &Path, path: &Path) {
         _ => panic!("Unable to trash files"),
     };
     //check if trashed file is a directory
-    if home_path.join(".punch/trash/").join(Path::new(name)).is_dir() {
-        let entries = fs::read_dir(home_path.join(".punch/trash/").join(name))
-            .expect("unable to parse directory");
+    if home_path.join(".ptrash").join(name).is_dir() {
+        let entries =
+            fs::read_dir(home_path.join(".ptrash").join(name)).expect("unable to parse directory");
 
         fs::create_dir_all(path).unwrap();
 
@@ -105,7 +103,7 @@ fn u_trash(name: &Path, path: &Path) {
                     } else {
                         fs::copy(
                             home_path
-                                .join(".punch/trash/")
+                                .join(".ptrash")
                                 .join(&name.join(entry.file_name())),
                             path.join(entry.file_name()),
                         )
@@ -115,16 +113,7 @@ fn u_trash(name: &Path, path: &Path) {
             }
         }
     } else {
-        fs::copy(home_path.join(".punch/trash/").join(name), path).unwrap();
-    }
-    //delete file in trash after
-    let trash_file = home_path.join(".punch/trash/").join(name);
-    if trash_file.is_dir() {
-        fs::remove_dir_all(&trash_file)
-            .expect(format!("error deleting folder: {}", &trash_file.display()).as_str());
-    } else {
-        fs::remove_file(&trash_file)
-            .expect(format!("error deleting file: {}", &trash_file.display()).as_str());
+        fs::copy(home_path.join(".ptrash").join(name), path).unwrap();
     }
 }
 //if the action preformed on the file was "Create"
@@ -162,5 +151,19 @@ pub fn undo() {
         u_create(&latest_file._path);
     } else if latest_file._action == "Trash" {
         u_trash(Path::new(&latest_file._name), Path::new(&latest_file._path));
+        //delete file in trash after
+        let home_path = match home::home_dir() {
+            Some(path) => path,
+            _ => panic!("Unable to trash files"),
+        };
+        let trash_file = home_path.join(".ptrash").join(&latest_file._name);
+        if trash_file.is_dir() {
+            fs::remove_dir_all(&trash_file)
+                .expect(format!("error deleting folder: {}", &trash_file.display()).as_str());
+        } else {
+            fs::remove_file(&trash_file)
+                .expect(format!("error deleting file: {}", &trash_file.display()).as_str());
+        }
     }
 }
+
