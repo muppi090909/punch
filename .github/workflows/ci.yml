@@ -12,11 +12,13 @@ env:
 jobs:
   build:
 
-    runs-on: ubuntu-20-04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
     - run: sudo apt install libsqlite3-dev build-essential
     - run: bash build.sh
-    - run: ./target/release/punch hello
+    - run: cd ~
+    - run: source ~/.bashrc
+    - run: punch hello
     - run: ls hello
