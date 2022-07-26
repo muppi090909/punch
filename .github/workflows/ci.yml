@@ -16,10 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Setup
-    run: sudo apt install libsqlite3-dev build-essential
-    - name: Build
-    run: bash build.sh
-    - name: Test
-    run: ./target/release/punch hello
-    run: ls hello
+    - run: sudo apt install libsqlite3-dev build-essential
+    - run: bash build.sh
+    - run: ./target/release/punch hello
+    - run: ls hello
