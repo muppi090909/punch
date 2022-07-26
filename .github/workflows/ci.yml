@@ -16,9 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - run: sudo apt install libsqlite3-dev build-essential
+    - run: sudo apt install -y libsqlite3-dev build-essential
     - run: bash build.sh
-    - run: cargo run --release -- hello
-    - run: ls hello
-    - run: cargo run --release -- -d hello
-    - run: if [[ -f hello ]]; then exit 1; fi
+    - run: cargo run --release -- hello && ls hello
+    - run: cargo run --release -- -d hello && [[ -f hello ]] && exit 1
